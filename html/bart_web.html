@@ -11,6 +11,13 @@
 </head>
 <body>
 <div class="container">
+	<!-- <form action="" onsubmit="connect()" id="connectForm">
+		<div>
+			IP:
+			<input required pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" type="text" id="ip">
+		</div>
+	</form> -->
+
 	<form action="" onsubmit="join()" id="joinForm">
 		<div>
 			Name:
@@ -29,23 +36,19 @@
 </div>
 
 <script>
-	var text, fontsize, speed, font;
-
 	$("#joinForm").submit(function(event) {
 		event.preventDefault(); 
 	});
 
-	function join() {
-		name = document.getElementById("name").value;
-		seat = parseInt(document.getElementById("seat").value);
-		color = document.getElementById("color").value;
-		// color = parseFloat(document.getElementById("speed").value);
-		var joinMsg = createCmdMsg("J", name, seat, color);
-		cmd_path_pub.publish(joinMsg);
-	}
+	$("#connectForm").submit(function(event) {
+		event.preventDefault(); 
+		});
+
+	var ip = prompt("ROS IP", window.location.hostname);
+	var url = "ws://"+ip+":9090";
 
 	var ros = new ROSLIB.Ros({
-		url : 'ws://localhost:9090'
+		url : url
 	});
 
 	ros.on('connection', function() {
@@ -60,11 +63,21 @@
 		console.log('Connection to websocket server closed.');
 	});
 
-	var cmd_path_pub = new ROSLIB.Topic({
+	var cmd_pub = new ROSLIB.Topic({
 		ros : ros,
 		name : 'bart/cmd',
 		messageType : 'bart/Cmd'
 	});
+
+	function join() {
+		console.log("Join")
+		name = document.getElementById("name").value;
+		seat = parseInt(document.getElementById("seat").value);
+		color = document.getElementById("color").value;
+		// color = parseFloat(document.getElementById("speed").value);
+		var joinMsg = createCmdMsg("J", name, seat, color);
+		cmd_pub.publish(joinMsg);
+	}
 
 	function createCmdMsg(type, name, seat, color) {
 		return new ROSLIB.Message({
