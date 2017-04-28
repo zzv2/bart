@@ -1,3 +1,3 @@
 #!/bin/sh
-cd ~/ros_ws/src/cs4752_proj2/opentype/
+cd ~/catkin_ws/src/bart/html/
 python -m SimpleHTTPServer
