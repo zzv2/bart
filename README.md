@@ -7,5 +7,6 @@ HRI 4410 Final Project
 
 ## Usage
 - roscore
-- 
+- roslaunch bart server.launch
 - http://localhost:8000/bart_web.html
+- http://10.0.2.15:8000/bart_web.html
