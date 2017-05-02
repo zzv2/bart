@@ -1,0 +1,8 @@
+controller_list:
+  - name: head_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: true
+    joints:
+      - head_pan_joint
+      - head_tilt_joint
