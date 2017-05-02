@@ -14,6 +14,9 @@ HRI 4410 Final Project
 - roscore
 - roslaunch bart server.launch
 
+- roslaunch bart head_minimal.launch
+- rosrun arbotix_python arbotix_gui.py
+
 - http://localhost:8000/bart_web.html
 - http://10.0.2.15:8000/bart_web.html
 - http://192.168.1.103:8000/bart_web.html

@@ -1,3 +1,3 @@
 #!/bin/sh
-cd ~/catkin_ws/src/bart/html/
+cd ~/ros_ws/src/bart/html/
 python -m SimpleHTTPServer

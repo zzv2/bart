@@ -16,7 +16,7 @@ def cmdCb(cmd):
 	rospy.loginfo(cmd)
 
 def server():
-	rospy.init_node("bart-server")
+	rospy.init_node("bart_server")
 	rospy.loginfo("Initialized Server")
 
 	rospy.Subscriber("bart/cmd", Cmd, cmdCb, queue_size=1)
