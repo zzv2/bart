@@ -21,9 +21,24 @@
 			<input type="submit" value="Join">
 		</div>
 	</form>
+
+	<form action="" onsubmit="leave()" id="leaveForm" style="display: none">
+		<div>
+			<input type="submit" value="Leave">
+		</div>
+	</form>
 </div>
 
+<div>
+	<table id="members" cellpadding="5">
+		<caption><h3>Members</h3></caption>
+	</table>
+	
+</div>
+
+
 <script>
+// $(document).ready(function() {
 	$("#joinForm").submit(function(event) {
 		event.preventDefault(); 
 	});
@@ -51,30 +66,152 @@
 		console.log('Connection to websocket server closed.');
 	});
 
-	var cmd_pub = new ROSLIB.Topic({
+	// var cmd_pub = new ROSLIB.Topic({
+	// 	ros : ros,
+	// 	name : 'bart/cmd',
+	// 	messageType : 'bart/Cmd'
+	// });
+
+	var group_sub = new ROSLIB.Topic({
 		ros : ros,
-		name : 'bart/cmd',
-		messageType : 'bart/Cmd'
+		name : 'bart/group',
+		messageType : 'bart/Group'
 	});
 
+	// Calling a service
+	var actionClient = new ROSLIB.Service({
+		ros : ros,
+		name : 'bart/action',
+		serviceType : 'bart/Action'
+	});
+
+	function increment(argument) {
+		// body...
+	}
+
+	var myName, mySeat, myColor;
 	function join() {
-		console.log("Join")
+		console.log("Join");
 		name = document.getElementById("name").value;
 		seat = parseInt(document.getElementById("seat").value);
 		color = document.getElementById("color").value;
-		var joinMsg = createCmdMsg("J", name, seat, color);
-		cmd_pub.publish(joinMsg);
-	}
 
-	function createCmdMsg(type, name, seat, color) {
-		return new ROSLIB.Message({
-			type : type,
+		var request = new ROSLIB.ServiceRequest({
+			type : "J",
 			name : name,
 			seat : seat,
 			color : color
 		});
+		actionClient.callService(request, function(result) {
+			if(result.resp != "joined") {
+				console.log('Result for service call on ' + actionClient.name + ': ' + result.resp);
+				alert(result.resp);
+			}
+			else {
+				myName = name, mySeat = seat, myColor = color
+				document.getElementById("joinForm").style.display = 'none';
+				// document.getElementById("leaveForm").style.display = 'block';
+			}
+		});
 	}
 
+	function leave() {
+		console.log("Leave");
+		name = document.getElementById("name").value;
+		seat = parseInt(document.getElementById("seat").value);
+		color = document.getElementById("color").value;
+
+		var request = new ROSLIB.ServiceRequest({
+			type : "L",
+			name : name,
+			seat : seat,
+			color : color
+		});
+		actionClient.callService(request, function(result) {
+			if(result.resp != "left") {
+				console.log('Result for service call on ' + actionClient.name + ': ' + result.resp);
+				alert(result.resp);
+			}
+			else {
+				document.getElementById("joinForm").style.display = 'block';
+				document.getElementById("leaveForm").style.display = 'none';
+			}
+		});
+	}
+
+	group_sub.subscribe(function(group) {
+		console.log('Received message on ' + group_sub.name + ': type:' + group.type + ', size:' + group.size);
+
+		console.log("mySeat: "+mySeat);
+		// Update table
+		$("#members tr").remove(); 
+		var tbl = document.getElementById('members');
+		// tbl.style.width = '100px';
+		// tbl.style.border = '1px solid black';
+
+		for (var i = 0; i < group.name.length; i++) {
+			var name = group.name[i], seat = group.seat[i], color = group.color[i];
+
+			var tr = tbl.insertRow();
+			var td = tr.insertCell();
+			td.appendChild(document.createTextNode(name));
+			
+			td = tr.insertCell();
+			td.appendChild(document.createTextNode(seat));
+			
+			td = tr.insertCell();
+			td.appendChild(document.createTextNode(color));
+			
+			if(seat != mySeat){
+				td = tr.insertCell();
+				var btnI = document.createElement('input');
+				btnI.type = "button";
+				btnI.value = "+";
+				var requestI = new ROSLIB.ServiceRequest({
+					type : "I",
+					name : name,
+					seat : seat,
+					color : color
+				});
+				btnI.onclick = (function(entry) {
+					actionClient.callService(requestI, function(result) {
+						if(result.resp != "changed") {
+							console.log('Result for service call on ' + actionClient.name + ': ' + result.resp);
+							alert(result.resp);
+						}
+						else {
+							console.log("incremented");
+						}
+					});
+				});
+				td.appendChild(btnI);
+				
+				td = tr.insertCell();
+				btnD = document.createElement('input');
+				btnD.type = "button";
+				btnD.value = "-";
+				var requestD = new ROSLIB.ServiceRequest({
+					type : "D",
+					name : name,
+					seat : seat,
+					color : color
+				});
+				btnD.onclick = (function(entry) {
+					actionClient.callService(requestD, function(result) {
+						if(result.resp != "changed") {
+							console.log('Result for service call on ' + actionClient.name + ': ' + result.resp);
+							alert(result.resp);
+						}
+						else {
+							console.log("decremented");
+						}
+					});
+				});
+				td.appendChild(btnD);
+			}
+		}
+	});
+// });
 </script>
 </body>
 </html>
