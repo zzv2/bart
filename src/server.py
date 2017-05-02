@@ -23,6 +23,19 @@ class GroupC:
 		self.max_size = max_size
 		self.size = 0
 		self.group_pub = rospy.Publisher("bart/group", Group, queue_size=1)
+		self.head_pos_pub = rospy.Publisher("bart/head_pos", Vector3, queue_size=1)
+
+		rospy.sleep(3)
+
+		while not rospy.is_shutdown():
+			self.look_at(2)
+			rospy.sleep(1)
+			self.look_at(3)
+			rospy.sleep(1)
+			self.look_at(4)
+			rospy.sleep(1)
+			self.look_at(1)
+			rospy.sleep(1)
 
 	def join(self, cmd):
 		rospy.loginfo("joining...")
@@ -91,7 +104,25 @@ class GroupC:
 
 		rospy.loginfo(g)
 		self.group_pub.publish(g)
-		
+
+	def get_pos(self, s):
+		if 1 <= s and s <= self.max_size:
+			n = self.max_size
+			a = 2*np.pi/n
+			i = int(s-1)
+			x = np.cos(i*a)
+			y = np.sin(i*a)
+			return Vector3(x,y,0)
+		else:
+			rospy.logerr("Invalid Seat")
+			return Vector3()
+
+	def look_at(self, s):
+		rospy.loginfo("Look At")
+		pos = self.get_pos(s)
+		rospy.loginfo(pos)
+		self.head_pos_pub.publish(pos)
+
 
 class Server:
 	def __init__(self):
@@ -100,7 +131,6 @@ class Server:
 
 		# rospy.Subscriber("bart/cmd", Cmd, self.cmdCb, queue_size=1)
 		rospy.Service('bart/action', Action, self.actionCb)
-		self.head_pos_pub = rospy.Publisher("bart/head_pos", Vector3, queue_size=1)
 
 		self.max_size = 4
 		self.group = GroupC(self.max_size)
@@ -116,6 +146,9 @@ class Server:
 			resp = self.group.change(action, 1)
 			return ActionResponse(resp)
 		elif action.type == "D":
+			resp = self.group.change(action, -1)
+			return ActionResponse(resp)
+		elif action.type == "L":
 			resp = self.group.change(action, -1)
 			return ActionResponse(resp)
 
