@@ -9,7 +9,7 @@
 	<arg name="arm_type" default="pincher"/>
 
 	<node name="head_controller" pkg="bart" type="head_controller.py" output="screen"></node>
-	<node name="light_controller" pkg="bart" type="light_controller.py" output="screen"></node>
+	<!-- <node name="light_controller" pkg="bart" type="light_controller.py" output="screen"></node> -->
 
 	<node name="arbotix" pkg="arbotix_python" type="arbotix_driver" output="screen">
 		<rosparam file="$(find bart)/config/head_robot.yaml" command="load"/>

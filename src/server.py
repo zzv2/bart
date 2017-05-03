@@ -15,7 +15,10 @@ class Member:
 		self.name = name
 		self.seat = seat
 		self.color = color
-		self.score_reset()
+		self.score = 0
+		self.updates = 0
+		self.total_score = 0
+		self.total_updates = 0
 
 	def change(self, v):
 		self.score += v
@@ -174,7 +177,10 @@ class GroupC:
 		rospy.loginfo("execute: %s" % b)
 		if b == "positive":
 			# TODO:
-			# call all positive behaviors
+			# call all controllers
+			# head
+			# light
+			# sound
 			return True
 		elif b == "confused":
 			return True

@@ -34,7 +34,11 @@ class ArbotixROS(ArbotiX):
         # else:
         #     rospy.loginfo("ArbotiX being simulated.")
 
-
+OUTPUT = 255
+LOW = 0
+HI = 255
+RED_PIN = 1
+GREEN_PIN = 2
 
 class Light_Controller:
 	def __init__(self):
@@ -59,57 +63,63 @@ class Light_Controller:
 		# move_arm_service = createService('gatlin/move/arm', MoveRobot, self.handle_move_arm)
 
 		self.device = ArbotixROS()
+
+		rospy.sleep(2)
+
+		self.positive()
 			
-			self.device.setDigital(1, HI, OUTPUT)
-			self.device.setDigital(2,LOW, OUTPUT)
+		# self.device.setDigital(RED_PIN,HI,OUTPUT)
+		# self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
 
 		rospy.spin()
 
-	def positive():
-		self.device.setDigital(1, HI, OUTPUT)
-		self.device.setDigital(2,LOW, OUTPUT)
+	def positive(self):
+		rospy.loginfo("positive...")
+		self.device.setDigital(RED_PIN,HI,OUTPUT)
+		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
 		rospy.sleep(2)
-		self.device.setDigital(1, LOW, OUTPUT)
-		self.device.setDigital(2,LOW, OUTPUT)
+		self.device.setDigital(RED_PIN,LOW,OUTPUT)
+		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
 		rospy.sleep(2)
-		self.device.setDigital(1, HI, OUTPUT)
-		self.device.setDigital(2,LOW, OUTPUT)
+		self.device.setDigital(RED_PIN,HI,OUTPUT)
+		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
 		rospy.sleep(2)
-		self.device.setDigital(1, LOW, OUTPUT)
-		self.device.setDigital(2,LOW, OUTPUT)
+		self.device.setDigital(RED_PIN,LOW,OUTPUT)
+		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
+		rospy.sleep(2)
+		rospy.loginfo("positive.")
+
+	def negative(self):
+		self.device.setDigital(RED_PIN,LOW,OUTPUT)
+		self.device.setDigital(GREEN_PIN,HI,OUTPUT)
+		rospy.sleep(2)
+		self.device.setDigital(RED_PIN,LOW,OUTPUT)
+		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
+		rospy.sleep(2)
+		self.device.setDigital(RED_PIN,LOW,OUTPUT)
+		self.device.setDigital(GREEN_PIN,HI,OUTPUT)
+		rospy.sleep(2)
+		self.device.setDigital(RED_PIN,LOW,OUTPUT)
+		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
 		rospy.sleep(2)
 
-	def negative():
-		self.device.setDigital(1, LOW, OUTPUT)
-		self.device.setDigital(2,HI, OUTPUT)
+	def confused(self):
+		self.device.setDigital(RED_PIN,HI,OUTPUT)
+		self.device.setDigital(GREEN_PIN,HI,OUTPUT)
 		rospy.sleep(2)
-		self.device.setDigital(1, LOW, OUTPUT)
-		self.device.setDigital(2,LOW, OUTPUT)
+		self.device.setDigital(RED_PIN,HI,OUTPUT)
+		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
 		rospy.sleep(2)
-		self.device.setDigital(1, LOW, OUTPUT)
-		self.device.setDigital(2,HI, OUTPUT)
+		self.device.setDigital(RED_PIN,LOW,OUTPUT)
+		self.device.setDigital(GREEN_PIN,HI,OUTPUT)
 		rospy.sleep(2)
-		self.device.setDigital(1, LOW, OUTPUT)
-		self.device.setDigital(2,LOW, OUTPUT)
-		rospy.sleep(2)
-
-	def confused():
-		self.device.setDigital(1, HI, OUTPUT)
-		self.device.setDigital(2,HI, OUTPUT)
-		rospy.sleep(2)
-		self.device.setDigital(1, HI, OUTPUT)
-		self.device.setDigital(2,LOW, OUTPUT)
-		rospy.sleep(2)
-		self.device.setDigital(1, LOW, OUTPUT)
-		self.device.setDigital(2,HI, OUTPUT)
-		rospy.sleep(2)
-		self.device.setDigital(1, HI, OUTPUT)
-		self.device.setDigital(2,HI, OUTPUT)
+		self.device.setDigital(RED_PIN,HI,OUTPUT)
+		self.device.setDigital(GREEN_PIN,HI,OUTPUT)
 		rospy.sleep(2)
 
-	def neutral():
-		self.device.setDigital(1, LOW, OUTPUT)
-		self.device.setDigital(2,HI, OUTPUT)
+	def neutral(self):
+		self.device.setDigital(RED_PIN,LOW,OUTPUT)
+		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
 		rospy.sleep(2)
 
 if __name__ == "__main__":
