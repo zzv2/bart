@@ -3,7 +3,7 @@ port: /dev/ttyUSB0
 read_rate: 15
 write_rate: 25
 joints: {
-    head_pan_joint: {id: 6, neutral: 512, min_angle: -145, max_angle: 145, max_speed: 70, type: dynamixel},
+    head_pan_joint: {id: 6, neutral: 512, min_angle: -180, max_angle: 180, max_speed: 70, type: dynamixel},
     head_tilt_joint: {id: 7, neutral: 512, min_angle: -90, max_angle: 90, max_speed: 70, type: dynamixel}
 }
 controllers: {
