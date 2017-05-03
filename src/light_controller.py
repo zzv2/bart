@@ -39,6 +39,12 @@ LOW = 0
 HI = 255
 RED_PIN = 1
 GREEN_PIN = 2
+POS_HIGH = .3
+POS_LOW = .1
+NEG = .5
+CONF_HIGH = .33
+CONF_LOW = .25
+
 
 class Light_Controller:
 	def __init__(self):
@@ -75,52 +81,70 @@ class Light_Controller:
 
 	def positive(self):
 		rospy.loginfo("positive...")
-		self.device.setDigital(RED_PIN,HI,OUTPUT)
-		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
-		rospy.sleep(2)
-		self.device.setDigital(RED_PIN,LOW,OUTPUT)
-		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
-		rospy.sleep(2)
-		self.device.setDigital(RED_PIN,HI,OUTPUT)
-		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
-		rospy.sleep(2)
-		self.device.setDigital(RED_PIN,LOW,OUTPUT)
-		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
-		rospy.sleep(2)
+		for x in range(5):
+			self.device.setDigital(RED_PIN,HI,OUTPUT)
+			self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
+			rospy.sleep(POS_HIGH)
+			self.device.setDigital(RED_PIN,LOW,OUTPUT)
+			self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
+			rospy.sleep(POS_LOW)
+			self.device.setDigital(RED_PIN,HI,OUTPUT)
+			self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
+			rospy.sleep(POS_HIGH)
+			self.device.setDigital(RED_PIN,LOW,OUTPUT)
+			self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
+			rospy.sleep(POS_HIGH)
+
 		rospy.loginfo("positive.")
 
 	def negative(self):
-		self.device.setDigital(RED_PIN,LOW,OUTPUT)
-		self.device.setDigital(GREEN_PIN,HI,OUTPUT)
-		rospy.sleep(2)
-		self.device.setDigital(RED_PIN,LOW,OUTPUT)
-		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
-		rospy.sleep(2)
-		self.device.setDigital(RED_PIN,LOW,OUTPUT)
-		self.device.setDigital(GREEN_PIN,HI,OUTPUT)
-		rospy.sleep(2)
-		self.device.setDigital(RED_PIN,LOW,OUTPUT)
-		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
-		rospy.sleep(2)
+		for x in range(5):
+			self.device.setDigital(RED_PIN,LOW,OUTPUT)
+			self.device.setDigital(GREEN_PIN,HI,OUTPUT)
+			rospy.sleep(NEG)
+			self.device.setDigital(RED_PIN,LOW,OUTPUT)
+			self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
+			rospy.sleep(NEG)
+			self.device.setDigital(RED_PIN,LOW,OUTPUT)
+			self.device.setDigital(GREEN_PIN,HI,OUTPUT)
+			rospy.sleep(NEG)
+			self.device.setDigital(RED_PIN,LOW,OUTPUT)
+			self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
+			rospy.sleep(NEG)
 
 	def confused(self):
-		self.device.setDigital(RED_PIN,HI,OUTPUT)
-		self.device.setDigital(GREEN_PIN,HI,OUTPUT)
-		rospy.sleep(2)
-		self.device.setDigital(RED_PIN,HI,OUTPUT)
-		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
-		rospy.sleep(2)
-		self.device.setDigital(RED_PIN,LOW,OUTPUT)
-		self.device.setDigital(GREEN_PIN,HI,OUTPUT)
-		rospy.sleep(2)
-		self.device.setDigital(RED_PIN,HI,OUTPUT)
-		self.device.setDigital(GREEN_PIN,HI,OUTPUT)
-		rospy.sleep(2)
+		for x in range(2):
+			self.device.setDigital(RED_PIN,HI,OUTPUT)
+			self.device.se5tDigital(GREEN_PIN,HI,OUTPUT)
+			rospy.sleep(CONF_HIGH)
+			self.device.setDigital(RED_PIN,HI,OUTPUT)
+			self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
+			rospy.sleep(CONF_HIGH)
+			self.device.setDigital(RED_PIN,LOW,OUTPUT)
+			self.device.setDigital(GREEN_PIN,HI,OUTPUT)
+			rospy.sleep(CONF_HIGH)
+			self.device.setDigital(RED_PIN,HI,OUTPUT)
+			self.device.setDigital(GREEN_PIN,HI,OUTPUT)
+			rospy.sleep(CONF_HIGH)
+
+		for x in range(3):
+			self.device.setDigital(RED_PIN,HI,OUTPUT)
+			self.device.se5tDigital(GREEN_PIN,HI,OUTPUT)
+			rospy.sleep(CONF_LOW)
+			self.device.setDigital(RED_PIN,HI,OUTPUT)
+			self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
+			rospy.sleep(CONF_LOW)
+			self.device.setDigital(RED_PIN,LOW,OUTPUT)
+			self.device.setDigital(GREEN_PIN,HI,OUTPUT)
+			rospy.sleep(CONF_LOW)
+			self.device.setDigital(RED_PIN,HI,OUTPUT)
+			self.device.setDigital(GREEN_PIN,HI,OUTPUT)
+			rospy.sleep(CONF_LOW)
 
 	def neutral(self):
 		self.device.setDigital(RED_PIN,LOW,OUTPUT)
 		self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
-		rospy.sleep(2)
+
 
 if __name__ == "__main__":
 	Light_Controller()
