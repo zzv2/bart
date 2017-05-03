@@ -16,6 +16,9 @@ class Member:
 		self.seat = seat
 		self.color = color
 		self.score = 0
+		self.updates = 0
+		self.total_score = 0
+		self.total_updates = 0
 
 class GroupC:
 	def __init__(self, max_size):
@@ -24,18 +27,6 @@ class GroupC:
 		self.size = 0
 		self.group_pub = rospy.Publisher("bart/group", Group, queue_size=1)
 		self.head_pos_pub = rospy.Publisher("bart/head_pos", Vector3, queue_size=1)
-
-		rospy.sleep(3)
-
-		while not rospy.is_shutdown():
-			self.look_at(2)
-			rospy.sleep(1)
-			self.look_at(3)
-			rospy.sleep(1)
-			self.look_at(4)
-			rospy.sleep(1)
-			self.look_at(1)
-			rospy.sleep(1)
 
 	def join(self, cmd):
 		rospy.loginfo("joining...")
@@ -123,6 +114,21 @@ class GroupC:
 		rospy.loginfo(pos)
 		self.head_pos_pub.publish(pos)
 
+	def feedback(self, a):
+		self.look_at(a.seat)S
+		rospy.sleep(5)
+		self.score_reset(a.seat)
+
+	def score_reset(s):
+		if s in self.members.keys():
+			m = self.members[s]
+			m.score = 0
+			m.updates = 0
+
+	def score_reset_all():
+		for s,m in self.members:
+			m.score = 0
+			m.updates = 0
 
 class Server:
 	def __init__(self):
@@ -149,7 +155,10 @@ class Server:
 			resp = self.group.change(action, -1)
 			return ActionResponse(resp)
 		elif action.type == "L":
-			resp = self.group.change(action, -1)
+			resp = self.group.look_at(action.seat)
+			return ActionResponse(resp)
+		elif action.type == "F":
+			resp = self.group.feedback(action)
 			return ActionResponse(resp)
 
 if __name__ == "__main__":
