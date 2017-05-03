@@ -4,112 +4,117 @@ from math import *
 import numpy as np
 from std_msgs.msg import *
 from geometry_msgs.msg import *
-from copy import deepcopy
-from arbotix_python.arbotix import ArbotiX
-
-class ArbotixROS(ArbotiX):
-    
-    def __init__(self):
-        # pause = False
-
-        # load configurations    
-        port = rospy.get_param("~port", "/dev/ttyUSB0")
-        baud = int(rospy.get_param("~baud", "115200"))
-
-        # start an arbotix driver
-        ArbotiX.__init__(self, port, baud)        
-        rospy.sleep(2.0)
-        rospy.loginfo("Started ArbotiX connection on port " + port + ".")
-
-class Servo:
-	def __init__(self, device, name, id):
-		self.device = device
-		self.name = name
-		self.id = id
-		self.cmd_pub = rospy.Publisher("/%s_joint/command" % name, Float64, queue_size=1)
-		# self.set_speed_srv = rospy.ServiceProxy("/%s_joint/set_speed" % name, SetSpeed)
-		self.position = 0
-
-	def publish(self, cmd):
-		self.cmd_pub.publish(cmd)
-
-	def rad_to_enc(self, rad):
-		r = 2.62
-		return ((r+rad)/(2*r))*1024
-
-	def go_to(self, rad):
-		# rospy.loginfo("%s going..." % self.name)
-		self.cmd_pub.publish(rad)
-
-		tolerance = 3
-		dist = self.rad_to_enc(rad)-self.position
-		rate = rospy.Rate(10)
-		while abs(dist) > tolerance and not rospy.is_shutdown():
-			dist = self.rad_to_enc(rad)-self.position
-			# rospy.loginfo("dist: "+str(dist))
-			# rospy.loginfo("rad: "+str(self.rad_to_enc(rad)))
-			# rospy.loginfo("position: "+str(self.position))
-			rate.sleep()
-		# rospy.loginfo("%s gone." % self.name)
-
-	def reset(self):
-		self.cmd_pub.publish(0.0)
-
-	def update(self):
-		p = -1
-		while p == -1:
-			p = self.device.getPosition(self.id)
-		self.position = p
-		# self.voltage = self.device.getVoltage(self.id)
-		# self.speed = self.device.getSpeed(self.id)
-		# rospy.logwarn("servo %d (%s): %d" % (self.id, self.name, self.position))
+from control_msgs.msg import *
+from trajectory_msgs.msg import *
+from actionlib import *
 
 class Head_Controller:
 	def __init__(self):
 
 		rospy.init_node('Head_Controller')
-		rospy.loginfo("Launched Head Controller")
 
-		self.device = ArbotixROS()
-
-		self.head_tilt_servo = Servo(self.device, "head_tilt", 7)
-		self.head_pan_servo = Servo(self.device, "head_pan", 6)
+		self.client = SimpleActionClient('head_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+		self.client.wait_for_server()
 
 		self.head_pos_sub = rospy.Subscriber("bart/head_set", Vector3, self.head_set_callback, queue_size=1)
 		self.head_pos_sub = rospy.Subscriber("bart/head_pos", Vector3, self.head_pos_callback, queue_size=1)
 		self.head_action_sub = rospy.Subscriber("bart/head_action", String, self.head_action_callback, queue_size=1)
 
-		rospy.sleep(4)
+		rospy.loginfo("Launched Head Controller")
 
-		# self.head_pos_callback(Vector3(1,0,0))
+		self.tilt_offset = -np.pi/2+.3
+		self.go_to(0,self.tilt_offset, 1)
 
-		rate = rospy.Rate(5)
-		while not rospy.is_shutdown():
-			self.head_tilt_servo.update()
-			self.head_pan_servo.update()
-			rate.sleep()
+		self.pan, self.tilt = 0, self.tilt_offset
 
 		rospy.spin()
 
+	def make_goal(self):
+		_goal = FollowJointTrajectoryGoal()
+		_goal.goal_time_tolerance = rospy.Time(0.1)
+		_goal.trajectory.joint_names = ["head_pan_joint", "head_tilt_joint"]
+		_goal.trajectory.header.stamp = rospy.Time.now()
+		return _goal
+
+	def add_point(self, _goal, pan, tilt, time):
+		point = JointTrajectoryPoint()
+		point.positions = [pan, tilt]
+		point.time_from_start = rospy.Duration(time)
+		_goal.trajectory.points.append(point)
+
+	def go_to(self, pan, tilt, time):
+		_goal = self.make_goal()
+		self.add_point(_goal, pan, tilt, 0)
+		self.add_point(_goal, pan, tilt, time)
+		self.client.send_goal(_goal)
+		self.client.wait_for_result()
+		res = self.client.get_result()
+		if res.error_code == 0:
+			self.pan, self.tilt = pan, tilt
+		
+	def positive(self):
+		rospy.loginfo("positive")
+		# nod
+		a = 0.2
+		pause = 0.4
+		pan, tilt = self.pan, self.tilt
+
+		_goal = self.make_goal()
+		self.add_point(_goal, pan, tilt+0, 0*pause)
+		self.add_point(_goal, pan, tilt+a, 1*pause)
+		self.add_point(_goal, pan, tilt+0, 2*pause)
+		self.add_point(_goal, pan, tilt-a, 3*pause)
+		self.add_point(_goal, pan, tilt+0, 4*pause)
+		self.add_point(_goal, pan, tilt+a, 5*pause)
+		self.add_point(_goal, pan, tilt+0, 6*pause)
+
+		self.client.send_goal(_goal)
+		self.client.wait_for_result()
+
+	def negative(self):
+		rospy.loginfo("negative")
+		# shake
+		a = 0.2
+		pause = 0.4
+		pan, tilt = self.pan, self.tilt
+
+		_goal = self.make_goal()
+		self.add_point(_goal, pan+0, tilt, 0*pause)
+		self.add_point(_goal, pan+a, tilt, 1*pause)
+		self.add_point(_goal, pan+0, tilt, 2*pause)
+		self.add_point(_goal, pan-a, tilt, 3*pause)
+		self.add_point(_goal, pan+0, tilt, 4*pause)
+		self.add_point(_goal, pan+a, tilt, 5*pause)
+		self.add_point(_goal, pan+0, tilt, 6*pause)
+
+		self.client.send_goal(_goal)
+		self.client.wait_for_result()
+
+	def confused(self):
+		rospy.loginfo("confused")
+		# figure 8
+		a = 0.2
+		pause = 0.4
+		pan, tilt = self.pan, self.tilt
+
+		_goal = self.make_goal()
+		self.add_point(_goal, pan+0, tilt+0, 0*pause)
+		self.add_point(_goal, pan+a, tilt+a, 1*pause)
+		self.add_point(_goal, pan+a, tilt-a, 3*pause)
+		self.add_point(_goal, pan-a, tilt+a, 5*pause)
+		self.add_point(_goal, pan-a, tilt-a, 7*pause)
+		self.add_point(_goal, pan+0, tilt+0, 8*pause)
+
+		self.client.send_goal(_goal)
+		self.client.wait_for_result()
+
 	def head_action_callback(self, a):
-		if a == "positive":
-			# nod
-			rospy.sleep(2)
-		elif a == "confused":
-			# figure 8
-			rospy.sleep(2)
-		elif a == "negative":
-			# shake
-			rospy.sleep(2)
-
-	def unit_vector(self, vector):
-		return vector / np.linalg.norm(vector)
-
-	def angle(self, v1, v2):
-		v1_u = self.unit_vector(v1)
-		v2_u = self.unit_vector(v2)
-		cp = np.cross(v1_u,v2_u)
-		return copysign(np.arccos(np.dot(v1_u, v2_u)), cp.item(2))
+		if a.data == "positive":
+			self.positive()
+		elif a.data == "confused":
+			self.confused()
+		elif a.data == "negative":
+			self.negative()
 
 	def head_pos_callback(self, pt):
 		rospy.loginfo(pt)
@@ -122,15 +127,14 @@ class Head_Controller:
 		return self.head_set(roty,rotx)
 
 	def head_set_callback(self, s):
-		self.head_pan_servo.go_to(s.x)
-		self.head_tilt_servo.go_to(s.y)
+		self.go_to(s.x,s.y, 1)
 
 	def head_set(self, pan, tilt):
-		tilt -= np.pi/2 - .1
+		tilt += self.tilt_offset
 		rospy.loginfo("pan: %f \t tilt: %f" % (pan, tilt))
-		self.head_pan_servo.publish(pan)
-		self.head_tilt_servo.publish(tilt)
+		self.go_to(pan, tilt, 1)
 
 		return True
+
 if __name__ == "__main__":
 	Head_Controller()
