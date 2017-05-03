@@ -21,7 +21,8 @@ class Head_Controller:
 		self.head_action_sub = rospy.Subscriber("bart/head_action", String, self.head_action_callback, queue_size=1)
 
 		rospy.loginfo("Launched Head Controller")
-
+		rospy.sleep(1)
+		
 		self.tilt_offset = -np.pi/2+.3
 		self.go_to(0,self.tilt_offset, 1)
 
@@ -55,8 +56,7 @@ class Head_Controller:
 	def positive(self):
 		rospy.loginfo("positive")
 		# nod
-		a = 0.2
-		pause = 0.4
+		a, pause = 0.2, 0.4
 		pan, tilt = self.pan, self.tilt
 
 		_goal = self.make_goal()
@@ -74,8 +74,7 @@ class Head_Controller:
 	def negative(self):
 		rospy.loginfo("negative")
 		# shake
-		a = 0.2
-		pause = 0.4
+		a, pause = 0.2, 0.4
 		pan, tilt = self.pan, self.tilt
 
 		_goal = self.make_goal()
@@ -93,8 +92,7 @@ class Head_Controller:
 	def confused(self):
 		rospy.loginfo("confused")
 		# figure 8
-		a = 0.2
-		pause = 0.4
+		a, pause = 0.2, 0.4
 		pan, tilt = self.pan, self.tilt
 
 		_goal = self.make_goal()

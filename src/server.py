@@ -175,7 +175,7 @@ class GroupC:
 		self.head_lights_pub.publish(b)
 		self.head_sound_pub.publish(b)
 		rospy.sleep(4)
-		return True
+		return "executed"
 
 class Server:
 	def __init__(self):
@@ -205,6 +205,9 @@ class Server:
 			return ActionResponse(resp)
 		elif action.type == "F":
 			resp = self.group.feedback(action)
+			return ActionResponse(resp)
+		elif action.type == "E":
+			resp = self.group.execute(action.name)
 			return ActionResponse(resp)
 
 if __name__ == "__main__":

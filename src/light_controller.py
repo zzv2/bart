@@ -112,6 +112,9 @@ class Light_Controller:
 			self.device.setDigital(RED_PIN,HI,OUTPUT)
 			self.device.setDigital(GREEN_PIN,HI,OUTPUT)
 			rospy.sleep(CONF_LOW)
+			self.device.setDigital(RED_PIN,LOW,OUTPUT)
+			self.device.setDigital(GREEN_PIN,LOW,OUTPUT)
+			rospy.sleep(CONF_LOW)
 
 	def neutral(self):
 		self.device.setDigital(RED_PIN,LOW,OUTPUT)
