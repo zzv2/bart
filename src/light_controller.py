@@ -41,10 +41,7 @@ class Light_Controller:
 		# Give the launch a chance to catch up
 		# rospy.sleep(5)
 
-		# Initialize the move_group API
-		moveit_commander.roscpp_initialize(sys.argv)
-
-		rospy.init_node('Light_Controller')
+		rospy.init_node('light_controller')
 		rospy.loginfo("Launched Light Controller")
 
 		# # constants
@@ -61,18 +58,59 @@ class Light_Controller:
 		# self.robot_name = "gatlin"
 		# move_arm_service = createService('gatlin/move/arm', MoveRobot, self.handle_move_arm)
 
-		self.ar = ArbotixROS()
-
-		rate = rospy.Rate(30)
-		while not rospy.is_shutdown():
+		self.device = ArbotixROS()
 			
-			# rospy.logerr(self.ar.getVoltage(4))
-			# rospy.logerr(self.ar.getSpeed(5))
-			rospy.logerr(self.ar.getPosition(1))
-
-			rate.sleep()
+			self.device.setDigital(1, HI, OUTPUT)
+			self.device.setDigital(2,LOW, OUTPUT)
 
 		rospy.spin()
+
+	def positive():
+		self.device.setDigital(1, HI, OUTPUT)
+		self.device.setDigital(2,LOW, OUTPUT)
+		rospy.sleep(2)
+		self.device.setDigital(1, LOW, OUTPUT)
+		self.device.setDigital(2,LOW, OUTPUT)
+		rospy.sleep(2)
+		self.device.setDigital(1, HI, OUTPUT)
+		self.device.setDigital(2,LOW, OUTPUT)
+		rospy.sleep(2)
+		self.device.setDigital(1, LOW, OUTPUT)
+		self.device.setDigital(2,LOW, OUTPUT)
+		rospy.sleep(2)
+
+	def negative():
+		self.device.setDigital(1, LOW, OUTPUT)
+		self.device.setDigital(2,HI, OUTPUT)
+		rospy.sleep(2)
+		self.device.setDigital(1, LOW, OUTPUT)
+		self.device.setDigital(2,LOW, OUTPUT)
+		rospy.sleep(2)
+		self.device.setDigital(1, LOW, OUTPUT)
+		self.device.setDigital(2,HI, OUTPUT)
+		rospy.sleep(2)
+		self.device.setDigital(1, LOW, OUTPUT)
+		self.device.setDigital(2,LOW, OUTPUT)
+		rospy.sleep(2)
+
+	def confused():
+		self.device.setDigital(1, HI, OUTPUT)
+		self.device.setDigital(2,HI, OUTPUT)
+		rospy.sleep(2)
+		self.device.setDigital(1, HI, OUTPUT)
+		self.device.setDigital(2,LOW, OUTPUT)
+		rospy.sleep(2)
+		self.device.setDigital(1, LOW, OUTPUT)
+		self.device.setDigital(2,HI, OUTPUT)
+		rospy.sleep(2)
+		self.device.setDigital(1, HI, OUTPUT)
+		self.device.setDigital(2,HI, OUTPUT)
+		rospy.sleep(2)
+
+	def neutral():
+		self.device.setDigital(1, LOW, OUTPUT)
+		self.device.setDigital(2,HI, OUTPUT)
+		rospy.sleep(2)
 
 if __name__ == "__main__":
 	Light_Controller()
