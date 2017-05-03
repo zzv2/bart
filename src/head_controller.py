@@ -16,19 +16,29 @@ class Head_Controller:
 		self.head_pan_pub = rospy.Publisher('/head_pan_joint/command', Float64, queue_size=1)
 		self.head_tilt_pub = rospy.Publisher('/head_tilt_joint/command', Float64, queue_size=1)
 
-		self.head_pos_sub = rospy.Subscriber("bart/head_pos", Vector3, self.head_callback, queue_size=1)
+		self.head_pos_sub = rospy.Subscriber("bart/head_pos", Vector3, self.head_pos_callback, queue_size=1)
+
+		self.head_action_sub = rospy.Subscriber("bart/head_action", String, self.head_action_callback, queue_size=1)
 
 		# self.tilt_set_speed_srv = rospy.ServiceProxy("/head_tilt_joint/set_speed", SetSpeed)
 		# self.pan_set_speed_srv = rospy.ServiceProxy("/head_pan_joint/set_speed", SetSpeed)
 		
 		rospy.sleep(4)
 
-		self.head_callback(Vector3(1,0,0))
+		self.head_pos_callback(Vector3(1,0,0))
 
 		# spd_req = SetSpeed()
 		# spd_req.speed = 10
-		
+
 		rospy.spin()
+
+	def head_action_callback(self, a):
+		if a == "positive":
+			# nod
+		elif a == "confused":
+			# figure 8
+		elif a == "negative":
+			# shake
 
 	def unit_vector(self, vector):
 		return vector / np.linalg.norm(vector)
@@ -39,7 +49,7 @@ class Head_Controller:
 		cp = np.cross(v1_u,v2_u)
 		return copysign(np.arccos(np.dot(v1_u, v2_u)), cp.item(2))
 
-	def head_callback(self, pt):
+	def head_pos_callback(self, pt):
 		rospy.loginfo(pt)
 		self.head_set_xyz(pt)
 

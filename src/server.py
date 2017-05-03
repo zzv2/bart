@@ -37,6 +37,7 @@ class GroupC:
 		self.size = 0
 		self.group_pub = rospy.Publisher("bart/group", Group, queue_size=1)
 		self.head_pos_pub = rospy.Publisher("bart/head_pos", Vector3, queue_size=1)
+		self.head_lights_pub = rospy.Publisher("bart/head_lights", String, queue_size=1)
 
 	def join(self, cmd):
 		rospy.loginfo("joining...")
@@ -180,6 +181,7 @@ class GroupC:
 			# call all controllers
 			# head
 			# light
+			self.head_lights_pub.publish(b)
 			# sound
 			return True
 		elif b == "confused":
