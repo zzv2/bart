@@ -35,11 +35,26 @@ class GroupC:
 		self.members = {}		
 		self.max_size = max_size
 		self.size = 0
-		self.group_pub = rospy.Publisher("bart/group", Group, queue_size=1)
+		
+		rospy.wait_for_service('bart/head_move')
+		self.head_move_srv = rospy.ServiceProxy('bart/head_move', MoveHead)
 		self.head_pos_pub = rospy.Publisher("bart/head_pos", Vector3, queue_size=1)
-		self.head_lights_pub = rospy.Publisher("bart/head_lights", String, queue_size=1)
 		self.head_action_pub = rospy.Publisher("bart/head_action", String, queue_size=1)
+
+		self.head_lights_pub = rospy.Publisher("bart/head_lights", String, queue_size=1)
 		self.head_sound_pub = rospy.Publisher("bart/head_sound", String, queue_size=1)
+
+		self.group_pub = rospy.Publisher("bart/group", Group, queue_size=1)
+
+	def move_pos_wait(self, pt):
+		try:
+			mh = MoveHead()
+			# mh.x,mh.y,mh.z = pt.x,pt.y,pt.z
+			resp = self.head_move_srv(pt.x,pt.y,pt.z)
+			return resp.resp
+		except rospy.ServiceException, e:
+			rospy.logerr("Service call failed: %s"%e)
+			return "err"
 
 	def join(self, cmd):
 		rospy.loginfo("joining...")
@@ -64,11 +79,11 @@ class GroupC:
 	def leave(self, cmd):
 		rospy.loginfo("leaving...")
 		rospy.loginfo(cmd)
-		if cmd.seat in self.members.keys():
-			rospy.loginfo(self.members[cmd.seat])
-			rospy.loginfo("left.")
+		res = self.members.pop(cmd.seat, None)
+		if res != None:
 			self.size -= 1
 			self.refresh()
+			rospy.loginfo("left.")
 			return "left"
 		else:
 			err = "Seat %d already has no one" % cmd.seat
@@ -135,35 +150,37 @@ class GroupC:
 		rospy.loginfo("Look At")
 		pos = self.get_pos(s)
 		rospy.loginfo(pos)
-		self.head_pos_pub.publish(pos)
-		return "looked"
+		# self.head_pos_pub.publish(pos)
+		return self.move_pos_wait(pos)
 
 	def feedback(self, a):
 		if a.seat in self.members.keys():
 			# look at the seat
 			rospy.loginfo("feedback for seat %d..." % a.seat)
 			res = self.look_at(a.seat)
-			rospy.sleep(5)
-		
-			m = self.members[a.seat]
-			rospy.loginfo("m.score: %d" % m.score)
+			if res == "moved":
+				m = self.members[a.seat]
+				rospy.loginfo("m.score: %d" % m.score)
 
-			# choose behavior based on score
-			low, high = -1, 2
-			if m.score < low:
-				behavior = "negative"
-			elif m.score < high:
-				behavior = "confused"
+				# choose behavior based on score
+				low, high = -1, 2
+				if m.score < low:
+					behavior = "negative"
+				elif m.score < high:
+					behavior = "confused"
+				else:
+					behavior = "positive"
+
+				# execute behavior
+				self.execute(behavior)
+
+				# reset
+				m.score = 0
+				m.updates = 0
+				return "feedback"
 			else:
-				behavior = "positive"
-
-			# execute behavior
-			self.execute(behavior)
-
-			# reset
-			m.score = 0
-			m.updates = 0
-			return "feedback"
+				rospy.logerr(res)
+				return res
 		else:
 			rospy.logerr("seat invalid")
 			return "seat invalid"
@@ -201,7 +218,7 @@ class Server:
 			resp = self.group.change(action, -1)
 			return ActionResponse(resp)
 		elif action.type == "L":
-			resp = self.group.look_at(action.seat)
+			resp = self.group.leave(action)
 			return ActionResponse(resp)
 		elif action.type == "F":
 			resp = self.group.feedback(action)

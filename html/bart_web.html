@@ -13,18 +13,18 @@
 	<form action="" onsubmit="join()" id="joinForm">
 		<div>
 			Name:
-			<input type="text" id="name">
+			<input type="text" id="name" class="left" >
 			Seat:
-			<input type="number" id="seat" min="1" max="10" value="1">
+			<input type="number" id="seat" min="1" max="10" value="1" class="left" >
 			Color:
-			<input type="text" id="color">
-			<input type="submit" value="Join">
+			<input type="text" id="color" class="left" >
+			<input type="submit" value="Join" class="left" >
 		</div>
 	</form>
 
-	<form action="" onsubmit="leave()" id="leaveForm" style="display: none">
+	<form action="" onsubmit="leave()" id="leaveForm">
 		<div>
-			<input type="submit" value="Leave">
+			<input type="submit" value="Leave" class="joined" disabled />
 		</div>
 	</form>
 </div>
@@ -33,6 +33,12 @@
 	<table id="members" cellpadding="5">
 		<caption><h3>Members</h3></caption>
 	</table>
+
+	<form action="" onsubmit="feedback()" id="feedbackForm" >
+		<div>
+			<input type="submit" value="Feedback" class="joined" disabled />
+		</div>
+	</form>
 	
 </div>
 
@@ -43,9 +49,13 @@
 		event.preventDefault(); 
 	});
 
-	$("#connectForm").submit(function(event) {
+	$("#feedbackForm").submit(function(event) {
 		event.preventDefault(); 
-		});
+	});
+
+	$("#leaveForm").submit(function(event) {
+		event.preventDefault(); 
+	});
 
 	var ip = prompt("ROS IP", window.location.hostname);
 	var url = "ws://"+ip+":9090";
@@ -81,11 +91,18 @@
 		serviceType : 'bart/Action'
 	});
 
-	function increment(argument) {
-		// body...
+	function enable(val) {
+		var join_inputs = document.getElementsByClassName("joined");
+		for (var i = 0; i < join_inputs.length; i++) {
+			join_inputs[i].disabled = !val;
+		}
+		var left_inputs = document.getElementsByClassName("left");
+		for (var i = 0; i < left_inputs.length; i++) {
+			left_inputs[i].disabled = val;
+		}
 	}
+	enable(false);
 
-	var myName, mySeat, myColor;
 	function join() {
 		console.log("Join");
 		name = document.getElementById("name").value;
@@ -99,14 +116,12 @@
 			color : color
 		});
 		actionClient.callService(request, function(result) {
-			if(result.resp != "joined") {
+			if(result.resp != "joined" && result.resp != "rejoined") {
 				console.log('Result for service call on ' + actionClient.name + ': ' + result.resp);
 				alert(result.resp);
 			}
 			else {
-				myName = name, mySeat = seat, myColor = color
-				document.getElementById("joinForm").style.display = 'none';
-				// document.getElementById("leaveForm").style.display = 'block';
+				enable(true);
 			}
 		});
 	}
@@ -129,8 +144,7 @@
 				alert(result.resp);
 			}
 			else {
-				document.getElementById("joinForm").style.display = 'block';
-				document.getElementById("leaveForm").style.display = 'none';
+				enable(false);
 			}
 		});
 	}
@@ -140,9 +154,34 @@
 		console.log('Connection to websocket server closed.');
 	});
 
+	function feedback() {
+		console.log("Feedback");
+		name = document.getElementById("name").value;
+		seat = parseInt(document.getElementById("seat").value);
+		color = document.getElementById("color").value;
+
+		var request = new ROSLIB.ServiceRequest({
+			type : "F",
+			name : name,
+			seat : seat,
+			color : color
+		});
+		actionClient.callService(request, function(result) {
+			if(result.resp != "feedback") {
+				console.log('Result for service call on ' + actionClient.name + ': ' + result.resp);
+				alert(result.resp);
+			}
+			else {
+			}
+		});
+	}
+
 	group_sub.subscribe(function(group) {
 		console.log('Received message on ' + group_sub.name + ': type:' + group.type + ', size:' + group.size);
 
+		myName = document.getElementById("name").value;
+		mySeat = parseInt(document.getElementById("seat").value);
+		myColor = document.getElementById("color").value;
 		console.log("mySeat: "+mySeat);
 		// Update table
 		$("#members tr").remove(); 

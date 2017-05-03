@@ -7,6 +7,7 @@ from geometry_msgs.msg import *
 from control_msgs.msg import *
 from trajectory_msgs.msg import *
 from actionlib import *
+from bart.srv import *
 
 class Head_Controller:
 	def __init__(self):
@@ -14,11 +15,13 @@ class Head_Controller:
 		rospy.init_node('Head_Controller')
 
 		self.client = SimpleActionClient('head_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
-		self.client.wait_for_server()
+		# self.client.wait_for_server()
 
 		self.head_pos_sub = rospy.Subscriber("bart/head_set", Vector3, self.head_set_callback, queue_size=1)
 		self.head_pos_sub = rospy.Subscriber("bart/head_pos", Vector3, self.head_pos_callback, queue_size=1)
 		self.head_action_sub = rospy.Subscriber("bart/head_action", String, self.head_action_callback, queue_size=1)
+
+		self.head_move_srv = rospy.Service('bart/head_move', MoveHead, self.handle_head_move)
 
 		rospy.loginfo("Launched Head Controller")
 		rospy.sleep(1)
@@ -29,6 +32,11 @@ class Head_Controller:
 		self.pan, self.tilt = 0, self.tilt_offset
 
 		rospy.spin()
+
+	def handle_head_move(self, req):
+		pt = Vector3(req.x, req.y, req.z)
+		self.head_pos_callback(pt)
+		return MoveHeadResponse("moved")
 
 	def make_goal(self):
 		_goal = FollowJointTrajectoryGoal()
