@@ -35,7 +35,6 @@ class Light_Controller:
 		rospy.init_node('light_controller')
 		rospy.loginfo("Launched Light Controller")
 
-
 		self.device = ArbotixROS()
 		rospy.Subscriber("bart/head_lights", String, self.lights_callback, queue_size=1)
 
