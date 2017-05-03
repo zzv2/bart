@@ -35,10 +35,13 @@ class Head_Controller:
 	def head_action_callback(self, a):
 		if a == "positive":
 			# nod
+			rospy.sleep(2)
 		elif a == "confused":
 			# figure 8
+			rospy.sleep(2)
 		elif a == "negative":
 			# shake
+			rospy.sleep(2)
 
 	def unit_vector(self, vector):
 		return vector / np.linalg.norm(vector)
@@ -60,6 +63,7 @@ class Head_Controller:
 		return self.head_set(roty,rotx)
 
 	def head_set(self, pan, tilt):
+		tilt -= np.pi/2 - .1
 		rospy.loginfo("pan: %f \t tilt: %f" % (pan, tilt))
 		self.head_pan_pub.publish(pan)
 		self.head_tilt_pub.publish(tilt)

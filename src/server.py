@@ -38,6 +38,8 @@ class GroupC:
 		self.group_pub = rospy.Publisher("bart/group", Group, queue_size=1)
 		self.head_pos_pub = rospy.Publisher("bart/head_pos", Vector3, queue_size=1)
 		self.head_lights_pub = rospy.Publisher("bart/head_lights", String, queue_size=1)
+		self.head_action_pub = rospy.Publisher("bart/head_action", String, queue_size=1)
+		self.head_sound_pub = rospy.Publisher("bart/head_sound", String, queue_size=1)
 
 	def join(self, cmd):
 		rospy.loginfo("joining...")
@@ -74,14 +76,6 @@ class GroupC:
 			self.refresh()
 			return err
 
-	def msg(self, msg):
-		c = Cmd()
-		c.type = "M"
-		c.name = msg
-		c.seat = 1
-		rospy.loginfo(msg)
-		self.msg_pub.publish(msg)
-
 	def change(self, cmd, v):
 		rospy.loginfo("changing...")
 		if cmd.seat in self.members.keys():
@@ -98,6 +92,17 @@ class GroupC:
 			rospy.logerr(err)
 			self.refresh()
 			return err
+
+	def score_reset(self, s):
+		if s in self.members.keys():
+			m = self.members[s]
+			m.score = 0
+			m.updates = 0
+
+	def score_reset_all(self):
+		for s,m in self.members:
+			m.score = 0
+			m.updates = 0
 
 	def refresh(self):
 		rospy.loginfo("updating...")
@@ -163,38 +168,20 @@ class GroupC:
 			rospy.logerr("seat invalid")
 			return "seat invalid"
 
-	def score_reset(self, s):
-		if s in self.members.keys():
-			m = self.members[s]
-			m.score = 0
-			m.updates = 0
-
-	def score_reset_all(self):
-		for s,m in self.members:
-			m.score = 0
-			m.updates = 0
-
 	def execute(self, b):
 		rospy.loginfo("execute: %s" % b)
-		if b == "positive":
-			# TODO:
-			# call all controllers
-			# head
-			# light
-			self.head_lights_pub.publish(b)
-			# sound
-			return True
-		elif b == "confused":
-			return True
-		elif b == "negative":
-			return True
+		# call all controllers
+		self.head_action_pub.publish(b)
+		self.head_lights_pub.publish(b)
+		self.head_sound_pub.publish(b)
+		rospy.sleep(4)
+		return True
 
 class Server:
 	def __init__(self):
 		rospy.init_node("Bart_Server")
 		rospy.loginfo("Initialized BART Server")
 
-		# rospy.Subscriber("bart/cmd", Cmd, self.cmdCb, queue_size=1)
 		rospy.Service('bart/action', Action, self.actionCb)
 
 		self.max_size = 4
