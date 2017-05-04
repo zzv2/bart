@@ -38,23 +38,13 @@ class GroupC:
 		
 		rospy.wait_for_service('bart/head_move')
 		self.head_move_srv = rospy.ServiceProxy('bart/head_move', MoveHead)
-		self.head_pos_pub = rospy.Publisher("bart/head_pos", Vector3, queue_size=1)
+		# self.head_pos_pub = rospy.Publisher("bart/head_pos", Vector3, queue_size=1)
 		self.head_action_pub = rospy.Publisher("bart/head_action", String, queue_size=1)
 
 		self.head_lights_pub = rospy.Publisher("bart/head_lights", String, queue_size=1)
 		self.head_sound_pub = rospy.Publisher("bart/head_sound", String, queue_size=1)
 
 		self.group_pub = rospy.Publisher("bart/group", Group, queue_size=1)
-
-	def move_pos_wait(self, pt):
-		try:
-			mh = MoveHead()
-			# mh.x,mh.y,mh.z = pt.x,pt.y,pt.z
-			resp = self.head_move_srv(pt.x,pt.y,pt.z)
-			return resp.resp
-		except rospy.ServiceException, e:
-			rospy.logerr("Service call failed: %s"%e)
-			return "err"
 
 	def join(self, cmd):
 		rospy.loginfo("joining...")
@@ -151,13 +141,23 @@ class GroupC:
 		pos = self.get_pos(s)
 		rospy.loginfo(pos)
 		# self.head_pos_pub.publish(pos)
-		return self.move_pos_wait(pos)
+		res = self.move_pos_wait(pos)
+		return res
+
+	def move_pos_wait(self, pt):
+		try:
+			resp = self.head_move_srv(pt.x,pt.y,pt.z)
+			return resp.resp
+		except rospy.ServiceException, e:
+			rospy.logerr("Service call failed: %s"%e)
+			return "err"
 
 	def feedback(self, a):
 		if a.seat in self.members.keys():
 			# look at the seat
 			rospy.loginfo("feedback for seat %d..." % a.seat)
 			res = self.look_at(a.seat)
+			rospy.sleep(4)
 			if res == "moved":
 				m = self.members[a.seat]
 				rospy.loginfo("m.score: %d" % m.score)
@@ -201,7 +201,7 @@ class Server:
 
 		rospy.Service('bart/action', Action, self.actionCb)
 
-		self.max_size = 4
+		self.max_size = 3
 		self.group = GroupC(self.max_size)
 
 		rospy.spin()
@@ -219,6 +219,9 @@ class Server:
 			return ActionResponse(resp)
 		elif action.type == "L":
 			resp = self.group.leave(action)
+			return ActionResponse(resp)
+		elif action.type == "A":
+			resp = self.group.look_at(action.seat)
 			return ActionResponse(resp)
 		elif action.type == "F":
 			resp = self.group.feedback(action)

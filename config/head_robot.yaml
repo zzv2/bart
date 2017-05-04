@@ -3,8 +3,8 @@ port: /dev/ttyUSB0
 read_rate: 15
 write_rate: 25
 joints: {
-    head_pan_joint: {id: 6, neutral: 512, min_angle: -180, max_angle: 180, max_speed: 70, type: dynamixel},
-    head_tilt_joint: {id: 7, neutral: 512, min_angle: -90, max_angle: 90, max_speed: 70, type: dynamixel}
+    head_pan_joint: {id: 6, neutral: 512, min_angle: -180, max_angle: 180, max_speed: 100, type: dynamixel},
+    head_tilt_joint: {id: 7, neutral: 512, min_angle: -90, max_angle: 90, max_speed: 100, type: dynamixel}
 }
 controllers: {
     head_controller: {type: follow_controller, joints: [head_pan_joint, head_tilt_joint], action_name: head_controller/follow_joint_trajectory, onboard: False },
