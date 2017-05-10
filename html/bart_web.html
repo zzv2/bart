@@ -32,6 +32,11 @@
 <div>
 	<table id="members" cellpadding="5">
 		<caption><h3>Members</h3></caption>
+		<tr class="header">
+			<th>Name</th>
+			<th>Seat</th>
+			<th>Color</th>
+		</tr>
 	</table>
 
 	<form action="" onsubmit="feedback()" id="feedbackForm" >
@@ -71,12 +76,6 @@
 	ros.on('error', function(error) {
 		console.log('Error connecting to websocket server: ', error);
 	});
-
-	// var cmd_pub = new ROSLIB.Topic({
-	// 	ros : ros,
-	// 	name : 'bart/cmd',
-	// 	messageType : 'bart/Cmd'
-	// });
 
 	var group_sub = new ROSLIB.Topic({
 		ros : ros,
@@ -183,17 +182,14 @@
 		var mySeat = parseInt(document.getElementById("seat").value);
 		var myColor = document.getElementById("color").value;
 		console.log("mySeat: "+mySeat);
+
 		// Update table
-		$("#members tr").remove(); 
+		$("#members tr:not(.header)").remove(); 
 		var tbl = document.getElementById('members');
 		// tbl.style.width = '100px';
 		// tbl.style.border = '1px solid black';
 
 		for (var i = 0; i < group.seat.length; i++) {
-			// var group.name[i] = group.name[i];
-			// var group.seat[i] = group.seat[i];
-			var _c = group.color[i];
-
 			var tr = tbl.insertRow();
 			var td = tr.insertCell();
 			td.appendChild(document.createTextNode(group.name[i]));
@@ -202,9 +198,9 @@
 			td.appendChild(document.createTextNode(group.seat[i]));
 			
 			td = tr.insertCell();
-			td.appendChild(document.createTextNode(_c));
+			td.appendChild(document.createTextNode(group.color[i]));
 			
-			if(group.seat[i] != mySeat){
+			if(group.seat[i] != mySeat) {
 				td = tr.insertCell();
 				var btnI = document.createElement('input');
 				btnI.type = "button";
@@ -248,6 +244,46 @@
 					});
 				});
 				td.appendChild(btnD);
+
+				td = tr.insertCell();
+			}
+			else {
+				td = tr.insertCell();
+				td = tr.insertCell();
+				td = tr.insertCell();
+
+				var btnS = document.createElement('input');
+				btnS.type = "button";
+				btnS.value = "Set Pos";
+				btnS.seat = mySeat;
+				btnS.name = myName;
+				btnS.color = myColor;
+				btnS.onclick = (function(entry) {
+					var t = entry.target;
+					var requestR = new ROSLIB.ServiceRequest({ type : "R", name : t.name, seat : parseInt(t.seat), color : t.color });
+					actionClient.callService(requestR, function(result1) {
+						if(result1.resp != "relaxed") {
+							console.log('Result1 for service call on ' + actionClient.name + ': ' + result1.resp);
+							alert(result1.resp);
+						}
+						else {
+							console.log("relaxed");
+							alert("Please turn the robot toward you and press ok");
+							var requestS = new ROSLIB.ServiceRequest({ type : "S", name : t.name, seat : parseInt(t.seat), color : t.color });
+							actionClient.callService(requestS, function(result2) {
+								if(result2.resp != "set") {
+									console.log('Result2 for service call on ' + actionClient.name + ': ' + result2.resp);
+									alert(result2.resp);
+								}
+								else {
+									console.log("set");
+									alert("pos set successfully");
+								}
+							});
+						}
+					});
+				});
+				td.appendChild(btnS);
 			}
 		}
 	});

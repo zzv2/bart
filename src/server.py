@@ -20,6 +20,8 @@ class Member:
 		self.total_score = 0
 		self.total_updates = 0
 
+		self.pos = None
+
 	def change(self, v):
 		self.score += v
 		self.updates += 1
@@ -38,6 +40,7 @@ class GroupC:
 		
 		# rospy.wait_for_service('bart/head_move')
 		self.head_move_srv = rospy.ServiceProxy('bart/head_move', MoveHead)
+		self.head_get_srv = rospy.ServiceProxy('bart/head_get', GetHead)
 		# self.head_pos_pub = rospy.Publisher("bart/head_pos", Vector3, queue_size=1)
 		self.head_action_pub = rospy.Publisher("bart/head_action", String, queue_size=1)
 
@@ -127,6 +130,11 @@ class GroupC:
 		self.group_pub.publish(g)
 
 	def get_pos(self, s):
+		if s in self.members.keys():
+			m = self.members[s]
+			if m.pos != None:
+				return m.pos
+	def get_circular_pos(self, s):
 		if 1 <= s and s <= self.max_size:
 			n = self.max_size
 			a = 2*np.pi/n
@@ -141,14 +149,40 @@ class GroupC:
 	def look_at(self, s):
 		rospy.loginfo("Look At")
 		pos = self.get_pos(s)
-		rospy.loginfo(pos)
-		# self.head_pos_pub.publish(pos)
-		res = self.move_pos_wait(pos)
+		if pos != None:
+			pan, tilt = pos
+			rospy.loginfo("using set pos")
+			rospy.loginfo(pos)
+			res = self.move_set_wait(pan, tilt, 2)
+		else:
+			pos = self.get_circular_pos(s)
+			rospy.loginfo("using circular pos")
+			rospy.loginfo(pos)
+			# self.head_pos_pub.publish(pos)
+			res = self.move_pos_wait(pos)
 		return res
+
+	def move_relax_wait(self, pan=False, tilt=False):
+		try:
+			pan_r = 0.0 if pan else 1.0
+			tilt_r = 0.0 if tilt else 1.0
+			resp = self.head_move_srv("R", pan_r, tilt_r, 0.0)
+			return resp.resp
+		except rospy.ServiceException, e:
+			rospy.logerr("Service call failed: %s"%e)
+			return "err"
+
+	def move_set_wait(self, pan, tilt, time):
+		try:
+			resp = self.head_move_srv("S", pan, tilt, time)
+			return resp.resp
+		except rospy.ServiceException, e:
+			rospy.logerr("Service call failed: %s"%e)
+			return "err"
 
 	def move_pos_wait(self, pt):
 		try:
-			resp = self.head_move_srv(pt.x,pt.y,pt.z)
+			resp = self.head_move_srv("L",pt.x,pt.y,pt.z)
 			return resp.resp
 		except rospy.ServiceException, e:
 			rospy.logerr("Service call failed: %s"%e)
@@ -160,7 +194,7 @@ class GroupC:
 			rospy.loginfo("feedback for seat %d..." % a.seat)
 			res = self.look_at(a.seat)
 			# rospy.sleep(4)
-			if res == "moved":
+			if res == "moved" or res == "set":
 				m = self.members[a.seat]
 				rospy.loginfo("m.score: %d" % m.score)
 
@@ -196,6 +230,28 @@ class GroupC:
 		rospy.sleep(4)
 		return "executed"
 
+	def relax_pan(self, a):
+		if a.seat in self.members.keys():
+			self.move_relax_wait(pan=True, tilt=False)
+			return "relaxed"
+		else:
+			rospy.logerr("seat invalid")
+			return "seat invalid"
+
+	def set_pos(self, a):
+		if a.seat in self.members.keys():
+			m = self.members[a.seat]
+			resp = self.head_get_srv("P")
+			if resp.resp == "got":
+				m.pos = list(resp.data)
+				rospy.loginfo("Updated Pos")
+				rospy.loginfo(m.pos)
+				return "set"
+		else:
+			rospy.logerr("seat invalid")
+			return "seat invalid"
+
+
 class Server:
 	def __init__(self):
 		rospy.init_node("Bart_Server")
@@ -230,6 +286,12 @@ class Server:
 			return ActionResponse(resp)
 		elif action.type == "E":
 			resp = self.group.execute(action.name)
+			return ActionResponse(resp)
+		elif action.type == "R":
+			resp = self.group.relax_pan(action)
+			return ActionResponse(resp)
+		elif action.type == "S":
+			resp = self.group.set_pos(action)
 			return ActionResponse(resp)
 
 if __name__ == "__main__":

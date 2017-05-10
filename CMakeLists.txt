@@ -60,6 +60,7 @@ add_service_files(
   FILES
   Action.srv
   MoveHead.srv
+  GetHead.srv
 )
 
 ## Generate actions in the 'action' folder
