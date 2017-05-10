@@ -14,10 +14,11 @@ HRI 4410 Final Project
 - plug in robot to wall and usb
 - make sure laptop is connected to RedRover
 - open the terminal (use Ctrl+Shift+T to open a new tab)
+- run the next three commands in their own terminal:
+	- roscore
+	- roslaunch bart head_minimal.launch
+	- roslaunch bart server.launch
 
-- roscore
-- roslaunch bart head_minimal.launch
-- roslaunch bart server.launch
-
-- http://localhost:8000/bart_web.html
+- verify that the ip address of the server is 10.148.3.20
+- navigate to this url in a browser:
 - http://10.148.3.20:8000/bart_web.html

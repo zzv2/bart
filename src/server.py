@@ -36,7 +36,7 @@ class GroupC:
 		self.max_size = max_size
 		self.size = 0
 		
-		rospy.wait_for_service('bart/head_move')
+		# rospy.wait_for_service('bart/head_move')
 		self.head_move_srv = rospy.ServiceProxy('bart/head_move', MoveHead)
 		# self.head_pos_pub = rospy.Publisher("bart/head_pos", Vector3, queue_size=1)
 		self.head_action_pub = rospy.Publisher("bart/head_action", String, queue_size=1)

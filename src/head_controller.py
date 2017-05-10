@@ -17,8 +17,8 @@ class Head_Controller:
 		self.client = SimpleActionClient('head_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
 		self.client.wait_for_server()
 
-		self.head_pan_pub = rospy.Publisher('/head_pan_joint/command', Float64, queue_size=1)
-		self.head_tilt_pub = rospy.Publisher('/head_tilt_joint/command', Float64, queue_size=1)
+		# self.head_pan_pub = rospy.Publisher('/head_pan_joint/command', Float64, queue_size=1)
+		# self.head_tilt_pub = rospy.Publisher('/head_tilt_joint/command', Float64, queue_size=1)
 
 		self.head_pos_sub = rospy.Subscriber("bart/head_set", Vector3, self.head_set_callback, queue_size=1)
 		self.head_pos_sub = rospy.Subscriber("bart/head_pos", Vector3, self.head_pos_callback, queue_size=1)
@@ -27,16 +27,15 @@ class Head_Controller:
 		self.head_move_srv = rospy.Service('bart/head_move', MoveHead, self.handle_head_move)
 
 		rospy.loginfo("Launched Head Controller")
-		rospy.sleep(5)
+		rospy.sleep(3)
 		
-		self.tilt_offset = -np.pi/2+.3
-		# self.go_to(0,self.tilt_offset, 1, tolerance=0.5)
-		# self.start(0, 0, 2)
-		# self.start(0, self.tilt_offset, 3)
-		self.pan, self.tilt = 0, self.tilt_offset
-		self.head_pan_pub.publish(self.pan)
-		self.head_tilt_pub.publish(self.tilt)
-
+		self.offset = (0.0, -np.pi/2+.3)
+		# self.offset = (0.0, 0.0)
+		self.pos = self.offset
+		pan, tilt = self.pos
+		self.go_to(pan, tilt, 3)
+		# self.head_pan_pub.publish(self.pan)
+		# self.head_tilt_pub.publish(self.tilt)
 		
 		rospy.spin()
 
@@ -67,7 +66,8 @@ class Head_Controller:
 		self.go_to(s.x,s.y, 1)
 
 	def head_set(self, pan, tilt):
-		tilt += self.tilt_offset
+		pan += self.offset[0]
+		tilt += self.offset[1]
 		rospy.loginfo("pan: %f \t tilt: %f" % (pan, tilt))
 		self.go_to(pan, tilt, 3)
 
@@ -88,27 +88,16 @@ class Head_Controller:
 		point.time_from_start = rospy.Duration(time)
 		_goal.trajectory.points.append(point)
 
-	def start(self, pan, tilt, time):
-		_goal = self.make_goal(tolerance=0.1)
-		self.add_point(_goal, pan, tilt, 0, v=0.0)
-		self.add_point(_goal, pan, tilt, time, v=0.0)
-		self.client.send_goal(_goal)
-		self.client.wait_for_result()
-		res = self.client.get_result()
-		if res.error_code == 0:
-			self.pan, self.tilt = pan, tilt
-		else:
-			rospy.logerr(res)
-		
 	def go_to(self, pan, tilt, time):
 		_goal = self.make_goal()
-		self.add_point(_goal, self.pan, self.tilt, 0, v=0.)
+		_pan, _tilt = self.pos
+		self.add_point(_goal, _pan, _tilt, 0, v=0.)
 		self.add_point(_goal, pan, tilt, time, v=0.)
 		self.client.send_goal(_goal)
 		self.client.wait_for_result()
 		res = self.client.get_result()
 		if res.error_code == 0:
-			self.pan, self.tilt = pan, tilt
+			self.pos = (pan, tilt)
 		else:
 			rospy.logerr(res)
 		
@@ -116,7 +105,7 @@ class Head_Controller:
 		rospy.loginfo("positive")
 		# nod
 		a, pause = 0.2, 0.4
-		pan, tilt = self.pan, self.tilt
+		pan, tilt = self.pos
 
 		_goal = self.make_goal()
 		self.add_point(_goal, pan, tilt+0, 0*pause)
@@ -134,7 +123,7 @@ class Head_Controller:
 		rospy.loginfo("negative")
 		# shake
 		a, pause = 0.2, 0.4
-		pan, tilt = self.pan, self.tilt
+		pan, tilt = self.pos
 
 		_goal = self.make_goal()
 		self.add_point(_goal, pan+0, tilt, 0*pause)
@@ -152,7 +141,7 @@ class Head_Controller:
 		rospy.loginfo("confused")
 		# figure 8
 		a, pause = 0.2, 0.4
-		pan, tilt = self.pan, self.tilt
+		pan, tilt = self.pos
 
 		_goal = self.make_goal()
 		self.add_point(_goal, pan+0, tilt+0, 0*pause)

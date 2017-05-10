@@ -179,9 +179,9 @@
 	group_sub.subscribe(function(group) {
 		console.log('Received message on ' + group_sub.name + ': type:' + group.type + ', size:' + group.size);
 
-		myName = document.getElementById("name").value;
-		mySeat = parseInt(document.getElementById("seat").value);
-		myColor = document.getElementById("color").value;
+		var myName = document.getElementById("name").value;
+		var mySeat = parseInt(document.getElementById("seat").value);
+		var myColor = document.getElementById("color").value;
 		console.log("mySeat: "+mySeat);
 		// Update table
 		$("#members tr").remove(); 
@@ -189,31 +189,32 @@
 		// tbl.style.width = '100px';
 		// tbl.style.border = '1px solid black';
 
-		for (var i = 0; i < group.name.length; i++) {
-			var name = group.name[i], seat = group.seat[i], color = group.color[i];
+		for (var i = 0; i < group.seat.length; i++) {
+			// var group.name[i] = group.name[i];
+			// var group.seat[i] = group.seat[i];
+			var _c = group.color[i];
 
 			var tr = tbl.insertRow();
 			var td = tr.insertCell();
-			td.appendChild(document.createTextNode(name));
+			td.appendChild(document.createTextNode(group.name[i]));
 			
 			td = tr.insertCell();
-			td.appendChild(document.createTextNode(seat));
+			td.appendChild(document.createTextNode(group.seat[i]));
 			
 			td = tr.insertCell();
-			td.appendChild(document.createTextNode(color));
+			td.appendChild(document.createTextNode(_c));
 			
-			if(seat != mySeat){
+			if(group.seat[i] != mySeat){
 				td = tr.insertCell();
 				var btnI = document.createElement('input');
 				btnI.type = "button";
 				btnI.value = "+";
-				var requestI = new ROSLIB.ServiceRequest({
-					type : "I",
-					name : name,
-					seat : seat,
-					color : color
-				});
+				btnI.seat = group.seat[i];
+				btnI.name = group.name[i];
+				btnI.color = group.color[i];
 				btnI.onclick = (function(entry) {
+					var t = entry.target;
+					var requestI = new ROSLIB.ServiceRequest({ type : "I", name : t.name, seat : parseInt(t.seat), color : t.color });
 					actionClient.callService(requestI, function(result) {
 						if(result.resp != "changed") {
 							console.log('Result for service call on ' + actionClient.name + ': ' + result.resp);
@@ -227,16 +228,15 @@
 				td.appendChild(btnI);
 				
 				td = tr.insertCell();
-				btnD = document.createElement('input');
+				var btnD = document.createElement('input');
 				btnD.type = "button";
 				btnD.value = "-";
-				var requestD = new ROSLIB.ServiceRequest({
-					type : "D",
-					name : name,
-					seat : seat,
-					color : color
-				});
+				btnD.seat = group.seat[i];
+				btnD.name = group.name[i];
+				btnD.color = group.color[i];
 				btnD.onclick = (function(entry) {
+					var t = entry.target;
+					var requestD = new ROSLIB.ServiceRequest({ type : "D", name : t.name, seat : parseInt(t.seat), color : t.color });
 					actionClient.callService(requestD, function(result) {
 						if(result.resp != "changed") {
 							console.log('Result for service call on ' + actionClient.name + ': ' + result.resp);
