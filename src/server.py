@@ -86,11 +86,13 @@ class GroupC:
 		if cmd.seat in self.members.keys():
 			m = self.members[cmd.seat]
 			m.change(v)
-			rospy.loginfo("changed.")
 			rospy.loginfo("score: %d" % m.score)
-			rospy.loginfo("total_score: %d" % m.total_score)
 			rospy.loginfo("updates: %d" % m.updates)
+			rospy.loginfo("avg: %.3f" % (float(m.score)/m.updates))
+			rospy.loginfo("total_score: %d" % m.total_score)
 			rospy.loginfo("total_updates: %d" % m.total_updates)
+			rospy.loginfo("total_avg: %.3f" % (float(m.total_score)/m.total_updates))
+			rospy.loginfo("changed.")
 			return "changed"
 		else:
 			err = "Seat %d has no one" % cmd.seat
@@ -157,7 +159,7 @@ class GroupC:
 			# look at the seat
 			rospy.loginfo("feedback for seat %d..." % a.seat)
 			res = self.look_at(a.seat)
-			rospy.sleep(4)
+			# rospy.sleep(4)
 			if res == "moved":
 				m = self.members[a.seat]
 				rospy.loginfo("m.score: %d" % m.score)

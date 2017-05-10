@@ -69,8 +69,7 @@ class Head_Controller:
 		pan += self.offset[0]
 		tilt += self.offset[1]
 		rospy.loginfo("pan: %f \t tilt: %f" % (pan, tilt))
-		self.go_to(pan, tilt, 3)
-
+		self.go_to(pan, tilt, 2)
 		return True
 
 	def make_goal(self, tolerance=0.1):
